@@ -1,4 +1,4 @@
-FROM jetbrains/teamcity-agent:2018.2.4
+FROM jetbrains/teamcity-agent:2018.2.2
 
 #  TG-Terragrunt and TF-Terraform version
 ENV TG_VERSION=v0.18.7 \
