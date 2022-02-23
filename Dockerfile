@@ -1,26 +1,24 @@
-FROM jetbrains/teamcity-agent:2018.2.2
+FROM jetbrains/teamcity-agent:2018.1.2 as source
 
-#  TG-Terragrunt and TF-Terraform version
-ENV TG_VERSION=v0.18.7 \
-    TF_VERSION=0.11.14
+FROM ubuntu:focal
 
-RUN curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
-    python /tmp/get-pip.py && \
-    pip install awscli --upgrade --user && \
-    pip install jsonpickle && \
-    mv /root/.local/bin/aws /bin/aws && \
-    apt-get update -y && \
-    apt install software-properties-common unzip docker-ce -y && \
-    apt-add-repository --yes --update ppa:ansible/ansible && \
-    apt install ansible -y && \
-    curl -sS -L -O https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip && \
-    unzip terraform_${TF_VERSION}_linux_amd64.zip && \
-    mv terraform /usr/bin/terraform && \
-    chmod +x /usr/bin/terraform && \
-    curl -sS -L -O https://github.com/gruntwork-io/terragrunt/releases/download/${TG_VERSION}/terragrunt_linux_amd64 && \
-    mv terragrunt_linux_amd64 /usr/bin/terragrunt && \
-    chmod +x /usr/bin/terragrunt
+COPY --from=source /opt /opt
+COPY --from=source /data /data
+COPY --from=source /usr/lib/jvm/oracle-jdk/jre/ /usr/lib/jvm/oracle-jdk/jre/
+COPY --from=source /run-agent.sh /run-services.sh /
 
+ENV DOCKER_BUILDKIT=1 \
+    JRE_HOME="/usr/lib/jvm/oracle-jdk/jre" \
+    JAVA_HOME="/usr/lib/jvm/oracle-jdk/jre" \
+    JDK_18="/usr/lib/jvm/oracle-jdk/jre" \
+    JDK_18_x64="/usr/lib/jvm/oracle-jdk/jre" \
+    JDK_HOME="/usr/lib/jvm/oracle-jdk/jre" \
+    CONFIG_FILE="/data/teamcity_agent/conf/buildAgent.properties" \
+    LANG="en_US.UTF-8" \
+    LANGUAGE="en_US:en" \
+    GIT_SSH_VARIANT="ssh" \
+    PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/jvm/oracle-jdk/jre/bin"
 
+RUN  apt-get update && apt-get upgrade -y && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y git ca-certificates curl wget unzip docker.io awscli python-is-python2 openssh-client locales && locale-gen en_US.UTF-8
 
 CMD "/run-services.sh"
